@@ -1,9 +1,10 @@
 from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS # Import Cors
 import json
 import os
 
 app = Flask(__name__)
-
+CORS(app, origins=["http://example.com", "http://localhost:3000"]) #enable cors
 
 def load_products():
     with open('product.json', 'r') as f:
