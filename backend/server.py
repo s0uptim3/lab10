@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 
 def load_products():
-    with open('products.json', 'r') as f:
+    with open('product.json', 'r') as f:
         return json.load(f)['products']
     
 
@@ -34,28 +34,34 @@ def add_product():
 @app.route('/products/put/<int:product_id>', methods=['PUT'])
 def update_product(product_id):
     products = load_products()
-    product_index = next((i for i, p in enumerate(products) if p['id'] == product_id), None)
-    if product_index is not None:
-        updated_product = request.json
-        updated_product['id'] = product_id
-        products[product_index] = updated_product
-        with open('products.json', 'w') as f:
-            json.dump({"products": products}, f)
-        return jsonify(updated_product), 201
-    else:
-        return '', 404
+    for p in products:
+        if p['id'] == product_id:
+            updated_product = request.get_json()
+            p.update(updated_product)
+            return jsonify(p), 201
+    return jsonify({"error": "Product not found"}, product_id)
     
 @app.route('/products/delete/<int:product_id>', methods=['DELETE'])
 def remove_product(product_id):
     products = load_products()
-    product_index = next((i for i, p in enumerate(products) if p['id'] == product_id), None)
-    if product_index is not None:
-        deleted_product = products.pop(product_index)
-        with open('products.json', 'w') as f:
+    del_index = None
+    for index, product in enumerate(products):
+        if product['id'] == product_id:
+            del_index = index
+            break
+
+    if del_index is not None:
+        del products[del_index]
+
+        with open('product.json', 'w') as f:
             json.dump({"products": products}, f)
-        return jsonify(deleted_product), 201
+
+        return jsonify({"message": f"Product with ID {product_id} has been removed"}), 200
     else:
-        return '', 404
+        return jsonify({"error"}), 404
+
+
+    
 
 
 @app.route('/product-images/<path:filename>')
