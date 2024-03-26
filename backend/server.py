@@ -3,13 +3,16 @@ from flask_cors import CORS # Import Cors
 import json
 import os
 
+
+
 app = Flask(__name__)
-CORS(app, origins=["http://example.com", "http://localhost:3000"]) #enable cors
+CORS(app, origins='*', allow_headers='*', supports_credentials=False) #enable cors
 
 def load_products():
-    with open('product.json', 'r') as f:
+    with open('products.json', 'r') as f:
         return json.load(f)['products']
     
+
 
 @app.route('/products', methods=['GET'])
 @app.route('/products/<int:product_id>', methods=['GET'])
@@ -28,21 +31,23 @@ def add_product():
     products = load_products()
     new_product['id'] = len(products) + 1
     products.append(new_product)
-    with open('product.json', 'w') as f:
+    with open('products.json', 'w') as f:
         json.dump({"products": products}, f)
     return jsonify(new_product), 201
 
-@app.route('/products/put/<int:product_id>', methods=['PUT'])
+@app.route('/products/edit/<int:product_id>', methods=['PUT'])
 def update_product(product_id):
     products = load_products()
     for p in products:
         if p['id'] == product_id:
-            updated_product = request.get_json()
+            updated_product = request.json
             p.update(updated_product)
+            with open('products.json', 'w') as f:
+                json.dump({"products": products}, f)
             return jsonify(p), 201
     return jsonify({"error": "Product not found"}, product_id)
     
-@app.route('/products/delete/<int:product_id>', methods=['DELETE'])
+@app.route('/products/<int:product_id>', methods=['DELETE'])
 def remove_product(product_id):
     products = load_products()
     del_index = None
@@ -54,7 +59,7 @@ def remove_product(product_id):
     if del_index is not None:
         del products[del_index]
 
-        with open('product.json', 'w') as f:
+        with open('products.json', 'w') as f:
             json.dump({"products": products}, f)
 
         return jsonify({"message": f"Product with ID {product_id} has been removed"}), 200
